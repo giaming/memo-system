@@ -1,0 +1,115 @@
+spring:
+  application:
+    name: memo-system
+  profiles:
+    active: dev
+  cache:
+    type: redis
+  rabbitmq:
+    listener:
+      simple:
+        default-requeue-rejected: false
+  datasource:
+    url: jdbc:mysql://localhost:3306/memo_db?characterEncoding=utf8&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+# mybatis-plus配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.gzeic.memosystem.entity
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT配置
+app:
+  tenants:
+    - 1001
+  jwt:
+    secret: memoSecretKeyForSpringBootProject2026
+    expiration: 86400000
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    '[com.gzeic.memosystem]': debug
+    '[springfox]': debug
+    '[io.swagger]': debug
+    '[springdoc]': debug
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
+  file:
+    name: logs/memo.log
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:mysql://localhost:3306/memo_db_test?characterEncoding=utf8&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 1
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+---
+spring:
+  config:
+    activate:
+      on-profile: pro
+  datasource:
+    url: ${MEMO_DB_URL:jdbc:mysql://localhost:3306/memo_db?characterEncoding=utf8&useSSL=false}
+    username: ${MEMO_DB_USERNAME:root}
+    password: ${MEMO_DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${MEMO_REDIS_HOST:localhost}
+      port: ${MEMO_REDIS_PORT:6379}
+      database: ${MEMO_REDIS_DB:0}
+  rabbitmq:
+    host: ${MEMO_RMQ_HOST:localhost}
+    port: ${MEMO_RMQ_PORT:5672}
+    username: ${MEMO_RMQ_USERNAME:guest}
+    password: ${MEMO_RMQ_PASSWORD:guest}
+    virtual-host: ${MEMO_RMQ_VHOST:/}

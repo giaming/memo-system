@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: memo-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: memo_db
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: memo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: memo-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+
+  memo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memo-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: pro
+      MEMO_DB_URL: jdbc:mysql://mysql:3306/memo_db?characterEncoding=utf8&useSSL=false&serverTimeZone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      MEMO_DB_USERNAME: root
+      MEMO_DB_PASSWORD: root
+      MEMO_REDIS_HOST: redis
+      MEMO_RMQ_HOST: rabbitmq
+    restart: always
+
+volumes:
+  mysql_data:
+  redis_data:
