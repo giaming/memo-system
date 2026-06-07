@@ -76,8 +76,8 @@ public class SecurityConfig {
                 })
         );
 
-        http.addFilterBefore(tenantHeaderFilter, JwtAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(tenantHeaderFilter, JwtAuthenticationFilter.class);
 
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(
@@ -89,7 +89,10 @@ public class SecurityConfig {
                         "/doc.html",
                         "/webjars/**",
                         "/v3/api-docs/**",
-                        "/swagger-ui/**"
+                        "/swagger-ui/**",
+                        "/css/**",
+                        "/js/**",
+                        "/favicon.ico"
                 ).permitAll()
                 .anyRequest().authenticated()
         );

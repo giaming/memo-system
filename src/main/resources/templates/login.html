@@ -3,80 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户登录</title>
+    <title>用户登录 - 备忘录系统</title>
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <style>
-        body {
-            background-color: #f5f5f5;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            width: 400px;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .login-title {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-    </style>
+    <!-- 全局样式 -->
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-    <div class="login-container">
-        <h2 class="login-title">用户登录</h2>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="logo">
+            <div class="icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                    <line x1="8" y1="10" x2="16" y2="10"/>
+                    <line x1="8" y1="14" x2="12" y2="14"/>
+                </svg>
+            </div>
+            <h2>备忘录系统</h2>
+            <p>登录您的账户以管理备忘录</p>
+        </div>
         <form id="loginForm">
             <div class="mb-3">
                 <label for="username" class="form-label">用户名</label>
-                <input type="text" class="form-control" id="username" name="username" required>
+                <input type="text" class="form-control" id="username" name="username"
+                       placeholder="请输入用户名" required autofocus>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">密码</label>
-                <input type="password" class="form-control" id="password" name="password" required>
+                <input type="password" class="form-control" id="password" name="password"
+                       placeholder="请输入密码" required>
             </div>
-            <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-primary">登录</button>
-                <a href="/register" class="btn btn-link">注册</a>
-            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
+                登 录
+            </button>
         </form>
+        <div class="form-footer">
+            还没有账户？<a href="/register">立即注册</a>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
+            const btn = document.getElementById('loginBtn');
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            
+
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
-                
                 const data = await response.json();
-                
+
                 if (data.code === 200) {
-                    // 保存token到localStorage
                     localStorage.setItem('token', data.data.token);
                     localStorage.setItem('userId', data.data.userId);
-                    // 跳转到备忘录页面
-                    window.location.href = '/memos';
+                    localStorage.setItem('username', data.data.username || username);
+                    showToast('登录成功，正在跳转...', 'success');
+                    setTimeout(() => { window.location.href = '/memos'; }, 800);
                 } else {
-                    alert(data.msg || '登录失败');
+                    showToast(data.msg || '用户名或密码错误', 'error');
                 }
             } catch (error) {
                 console.error('登录失败:', error);
-                alert('登录失败，请稍后重试');
+                showToast('登录失败，请检查网络连接', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '登 录';
             }
         });
     </script>

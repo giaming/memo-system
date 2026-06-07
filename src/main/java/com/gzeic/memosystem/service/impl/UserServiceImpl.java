@@ -34,6 +34,11 @@ import java.util.Map;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     /**
+     * 默认租户ID（用于公开注册和登录场景）
+     */
+    private static final Long DEFAULT_TENANT_ID = 1L;
+
+    /**
      * Spring中bean注入的方式：
      * 1. 属性注入（字段注入）：@Autowire或@Resource， 在bean的变量上添加，完成依赖注入，缺点是不能够使用final关键字修饰，可能导致NullPointerException
      * 2. setter方法注入：setxx方法()与注解完成依赖注入，缺点是不能保证类的不可变性。
@@ -62,8 +67,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User register(RegisterRequest request) {
         Long tenantId = TenantContext.getTenantId();
+        // 如果没有租户ID，使用默认租户（适用于公开注册场景）
         if (tenantId == null) {
-            throw new BusinessException(400, "缺少租户信息，请在请求头携带 X-Tenant-Id");
+            tenantId = DEFAULT_TENANT_ID;
+            log.warn("未提供租户信息，使用默认租户ID: {}", tenantId);
         }
 
         // 校验确认密码（业务层校验，前端也需要校验）
@@ -116,6 +123,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Map<String, Object> login(LoginRequest request) {
         // 用户名统一转为小写进行查询
         String username = request.getUsername().toLowerCase().trim();
+
+        // 如果没有租户ID，使用默认租户（与注册逻辑保持一致）
+        Long tenantId = TenantContext.getTenantId();
+        if (tenantId == null) {
+            tenantId = DEFAULT_TENANT_ID;
+            TenantContext.setTenantId(tenantId);
+            log.warn("登录时未提供租户信息，使用默认租户ID: {}", tenantId);
+        }
 
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, username);
